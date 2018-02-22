@@ -17,6 +17,20 @@ lua 目前支持
 	
 	move (from, to)		-- 移动或改名（会自动创建目标目录）
 	copy (from, to)		-- 复制
+	
+
+目前发布第一个版本 v0.9 下载地址：
+
+https://github.com/jadedrip/FileScript/releases/download/0.9/file_script_0.9.zip
+
+** 如果无法执行可能需要下载 vc 运行库： https://download.visualstudio.microsoft.com/download/pr/100349138/88b50ce70017bf10f2d56d60fcba6ab1/VC_redist.x86.exe **
+
+## 编译
+
+Windows 环境下强烈推荐使用 [vcpkg](https://github.com/Microsoft/vcpkg) 来进行依赖包管理。
+
+本程序使用了 boost, libexif, lua
+并使用 Visual studio 2017 进行编译，并未使用平台相关的代码，理论上会比较容易移植到 linux 上。
 
 ## 展望
 未来可以通过增加插件机制，通过增加更多的命令以及更多文件解析能力来增加使用范围。
