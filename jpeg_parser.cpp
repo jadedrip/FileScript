@@ -22,7 +22,7 @@ void read_exif_entry(ExifEntry *ee, void* user_data)
 	if(ifd==EXIF_IFD_GPS )
 		data->properties[name] = value;
 
-	printf("%s: %s\n", name, value);
+	// printf("%s: %s\n", name, value);
 	//printf("%s: %s\n"
 	//	          , exif_tag_get_name_in_ifd(ee->tag, ifd)  
 	//	//, exif_tag_get_title_in_ifd(ee->tag, ifd)

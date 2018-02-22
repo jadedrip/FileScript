@@ -28,7 +28,7 @@ InteroperabilityIndex: R98
 InteroperabilityVersion: 0100
 ]]
 function run( file )
-	print ("out = " .. out)
+	-- print ("out = " .. out)
 	c = string.sub(out,-1,1)
 	if c =="\\" or c == "/" then
 		to = out
@@ -39,6 +39,8 @@ function run( file )
 	date=file["GPSDateStamp"]
 	lat = file["GPSLatitude"]
 	lon = file["GPSLongitude"]
+
+	filename = 	file["filename"]
 	if date  and lat  and lon  then
 		date = string.sub( date, 0, 7 )
 		date = string.gsub( date, ":", "/" )
@@ -48,8 +50,12 @@ function run( file )
 		lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
 		lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
 		to = to .. lat .. lon
-		move( file["filename"] , to )
+	
+		print ( filename .. " to " .. to)
+		move( filename , to )
+		-- iPhone 会有 .mov 文件 
+		filename = string.gsub( filename, ".JPG$", ".mov" )
+		print ( filename .. " to " .. to)
+		move( filename , to )
 	end
-
-	print ( file["filename"] .. " to " .. to)
 end
