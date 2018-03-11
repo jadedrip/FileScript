@@ -47,8 +47,8 @@ function run( file )
 		to = to .. date
 
 		print ("lat " .. lat)
-		lat = string.gsub( lat, "^(%d+),%s*(%d)%d*,.*$", "_%1_%2" )
-		lon =  string.gsub( lon, "^(%d+),%s*(%d)%d*,.*$", "_%1_%2" )
+		lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
+		lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
 		to = to .. lat .. lon
 	
 		print ( filename .. " to " .. to)
