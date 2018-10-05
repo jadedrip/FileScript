@@ -156,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileScript.cpp" />
+    <ClCompile Include="hash.cpp" />
     <ClCompile Include="jpeg_parser.cpp" />
     <ClCompile Include="luaFunc.cpp" />
     <ClCompile Include="stdafx.cpp">
