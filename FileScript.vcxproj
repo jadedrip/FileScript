@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="FileScript.cpp" />
     <ClCompile Include="jpeg_parser.cpp" />
+    <ClCompile Include="luaFunc.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

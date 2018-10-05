@@ -40,16 +40,22 @@ function run( file )
 	lat = file["GPSLatitude"]
 	lon = file["GPSLongitude"]
 
+	if not date then
+		date=file["DateTime"]
+	end
+
 	filename = 	file["filename"]
-	if date  and lat  and lon  then
+	if date  then
 		date = string.sub( date, 0, 7 )
 		date = string.gsub( date, ":", "/" )
 		to = to .. date
 
-		print ("lat " .. lat)
-		lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-		lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-		to = to .. lat .. lon
+		if lat  and lon then
+			print ("lat " .. lat)
+			lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
+			lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
+			to = to .. lat .. lon
+		end
 	
 		print ( filename .. " to " .. to)
 		move( filename , to )

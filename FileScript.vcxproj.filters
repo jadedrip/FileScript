@@ -35,6 +35,9 @@
     <ClCompile Include="jpeg_parser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="luaFunc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mv_jpg.lua" />
