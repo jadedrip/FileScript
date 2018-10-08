@@ -27,8 +27,40 @@ GPSDateStamp: 2016:12:24
 InteroperabilityIndex: R98
 InteroperabilityVersion: 0100
 ]]
+key = ""
+function PrintTable(table , level)
+  level = level or 1
+  local indent = ""
+  for i = 1, level do
+    indent = indent.."  "
+  end
+
+  if key ~= "" then
+    print(indent..key.." ".."=".." ".."{")
+  else
+    print(indent .. "{")
+  end
+
+  key = ""
+  for k,v in pairs(table) do
+     if type(v) == "table" then
+        key = k
+        PrintTable(v, level + 1)
+     else
+        local content = string.format("%s%s = %s", indent .. "  ",tostring(k), tostring(v))
+      print(content)  
+      end
+  end
+  print(indent .. "}")
+
+end
+
 function run( file )
-	-- print ("out = " .. out)
+	PrintTable(file)
+	if not out then
+		out = "out/"
+	end
+	print ("out = " .. out)
 	c = string.sub(out,-1,1)
 	if c =="\\" or c == "/" then
 		to = out
@@ -64,4 +96,7 @@ function run( file )
 		print ( filename .. " to " .. to)
 		move( filename , to )
 	end
+
+	local tab = { moved = true }
+	return tab
 end
