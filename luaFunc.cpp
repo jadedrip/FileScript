@@ -59,7 +59,7 @@ int lua_move_file(lua_State* L)
 
 	lua_pop(L, 2);
 	// TODO: 调试用
-#ifdef DEBUG
+#ifdef _DEBUG
 	std::cout << "Move: " << from << " to " << to << std::endl;
 #else
 	copy_file(from, to, true);

@@ -5,6 +5,7 @@
 #include "FileScript.h"
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <LuaBridge/LuaBridge.h>
 
 namespace fs = std::experimental::filesystem;
 namespace po = boost::program_options;
@@ -50,6 +51,7 @@ void saveProp(const std::string& hash, const map<string,string>& prop)
 
 }
 
+using namespace luabridge;
 void scanDirectory(lua_State*L, const fs::path& dir)
 {
 	fs::recursive_directory_iterator end_iter;
@@ -66,7 +68,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 		std::cout << "Find: " << file << std::endl;
 
 		auto filename = file.string();
-		int v = lua_getglobal(L, "run");        // 获取函数，压入栈中  
+		LuaRef run = getGlobal(L, "run");        // 获取函数，压入栈中  
 
 		// 准备参数
 		std::map<std::string, std::string> prop;
@@ -83,28 +85,44 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 			a->second(filename.c_str(), &state);
 		}
 
-		lua_newtable(L);
+		auto tab = LuaRef::newTable(L);
 		for (auto i : prop) {
-			append_field(L, i.first.c_str(), i.second.c_str());
+			tab[i.first]= i.second;
 		}
-		int x = lua_pcall(L, 1, LUA_MULTRET, 0);
-		if (x > 0) {
-			auto c = lua_tostring(L, 1);
-			std::cout << "return :" << c << std::endl;
-		} else {
-			std::cout << "End of: " << filename << std::endl;
-			/*  表放在索引 '-2' 处 */
-			lua_pushnil(L);  /* 第一个键 */
-			while (lua_next(L, -2) != 0) {
-			  /* 使用 '键' （在索引 -2 处） 和 '值' （在索引 -1 处）*/
-				string key = popString(L, -2);
-				string val = popString(L, -1);
-				prop[key] = val;
-				/* 移除 '值' ；保留 '键' 做下一次迭代 */
-				lua_pop(L, 1);
+		// int x = lua_pcall(L, 1, LUA_MULTRET, 0);
+		auto ref=run(tab);
+		if (ref.isTable()) {
+			size_t size = ref.length();
+			for (auto i = 1; i <= size; i++) {
+				LuaRef v=ref[i];
+				if (v.isBool()) {
+					std::cout << v.cast<bool>() << std::endl;
+				}
 			}
-			saveProp(hash, prop);
+
+			cout << ref["moved"].cast<bool>() << std::endl;
+			ref.print(std::cout);
 		}
+
+		//if (x > 0) {
+		//	auto c = lua_tostring(L, 1);
+		//	std::cout << "return :" << c << std::endl;
+		//} else {
+		//	std::cout << "End of: " << filename << std::endl;
+		//	if (lua_istable(L, -1)) {
+		//	/*  表放在索引 '-2' 处 */
+		//		lua_pushnil(L);  /* 第一个键 */
+		//		while (lua_next(L, -2) != 0) {
+		//		  /* 使用 '键' （在索引 -2 处） 和 '值' （在索引 -1 处）*/
+		//			string key = popString(L, -2);
+		//			string val = popString(L, -1);
+		//			prop[key] = val;
+		//			/* 移除 '值' ；保留 '键' 做下一次迭代 */
+		//			lua_pop(L, 1);
+		//		}
+		//		saveProp(hash, prop);
+		//	}
+		//}
 	}
 }
 
