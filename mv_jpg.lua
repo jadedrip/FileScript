@@ -57,6 +57,12 @@ end
 
 function run( file )
 	PrintTable(file)
+
+	filename = file["filename"]
+	-- 判断文件是否已经被移动过了
+	-- local d=loadData(filename, "moved") 
+	-- if d then return end
+
 	if not out then
 		out = "out/"
 	end
@@ -76,8 +82,7 @@ function run( file )
 		date=file["DateTime"]
 	end
 
-	filename = 	file["filename"]
-	if date  then
+	if date then
 		date = string.sub( date, 0, 7 )
 		date = string.gsub( date, ":", "/" )
 		to = to .. date
@@ -95,8 +100,8 @@ function run( file )
 		filename = string.gsub( filename, ".JPG$", ".mov" )
 		print ( filename .. " to " .. to)
 		move( filename , to )
+		
+		-- 保存一个标志
+		saveData( filename, "moved", true )
 	end
-
-	local tab = { moved = true }
-	return tab
 end

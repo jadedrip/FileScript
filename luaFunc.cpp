@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include <lua.h>
 #include <boost/tokenizer.hpp>
+#include <LuaBridge/LuaBridge.h>
 
 using namespace std;
 namespace fs = std::experimental::filesystem;
@@ -67,8 +68,31 @@ int lua_move_file(lua_State* L)
 	return 0;
 }
 
+using namespace luabridge;
+int lua_load_data(lua_State* L)
+{
+	auto data = LuaRef::fromStack(L, -1);
+	auto key = LuaRef::fromStack(L, -2);
+	auto filename = LuaRef::fromStack(L, -3);
+	if (!filename.isString() || !key.isString())
+		throw std::runtime_error("loadData([string] filename, [string] key, data) got wrong type.");
+	return 0;
+}
+
+int lua_save_data(lua_State* L)
+{
+	auto data = LuaRef::fromStack(L, -1);
+	auto key = LuaRef::fromStack(L, -2);
+	auto filename = LuaRef::fromStack(L, -3);
+	if (!filename.isString() || !key.isString())
+		throw std::runtime_error("loadData([string] filename, [string] key, data) got wrong type.");
+	return 0;
+}
+
 void initLuaFunction(lua_State*L)
 {
 	lua_register(L, "copy", &lua_copy_file);
 	lua_register(L, "move", &lua_move_file);
+	lua_register(L, "saveData", &lua_load_data);
+	lua_register(L, "loadData", &lua_save_data);
 }

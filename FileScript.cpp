@@ -5,6 +5,7 @@
 #include "FileScript.h"
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <LuaBridge/Map.h>
 #include <LuaBridge/LuaBridge.h>
 
 namespace fs = std::experimental::filesystem;
@@ -16,40 +17,6 @@ void initLuaFunction(lua_State*L);
 string fastHashFile(const fs::path& file);
 
 std::string datapath;
-
-void append_field(lua_State *L, const char* name, const char* value)
-{
-	lua_pushstring(L, name);
-	lua_pushstring(L, value);
-	lua_settable(L, -3);
-}
-
-// 弹出一个值，并转换成字符串
-std::string popString(lua_State*L, int index)
-{
-	int type = lua_type(L, index);
-	switch (type) {
-		case LUA_TSTRING: // string
-			return lua_tostring(L, index);
-		case LUA_TBOOLEAN:
-		{// bool
-			int v = lua_toboolean(L, index);
-			return v ? "true" : "false";
-		}
-		case LUA_TNUMBER:
-		{
-			auto v = lua_tonumber(L, index);
-			return std::to_string(v);
-		}
-		default:
-			throw std::runtime_error("Unknown type in returned table: " + std::string(lua_typename(L, type)));
-	}
-}
-
-void saveProp(const std::string& hash, const map<string,string>& prop)
-{
-
-}
 
 using namespace luabridge;
 void scanDirectory(lua_State*L, const fs::path& dir)
@@ -73,8 +40,8 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 		// 准备参数
 		std::map<std::string, std::string> prop;
 		prop["filename"] = filename;
-		string hash=fastHashFile(file);
-		prop["fast_hash"] = hash;
+		//string hash=fastHashFile(file);
+		//prop["fast_hash"] = hash;
 
 		map_state state;
 		state.data = &prop;
@@ -85,44 +52,13 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 			a->second(filename.c_str(), &state);
 		}
 
-		auto tab = LuaRef::newTable(L);
-		for (auto i : prop) {
-			tab[i.first]= i.second;
-		}
-		// int x = lua_pcall(L, 1, LUA_MULTRET, 0);
-		auto ref=run(tab);
-		if (ref.isTable()) {
-			size_t size = ref.length();
-			for (auto i = 1; i <= size; i++) {
-				LuaRef v=ref[i];
-				if (v.isBool()) {
-					std::cout << v.cast<bool>() << std::endl;
-				}
-			}
-
-			cout << ref["moved"].cast<bool>() << std::endl;
-			ref.print(std::cout);
-		}
-
-		//if (x > 0) {
-		//	auto c = lua_tostring(L, 1);
-		//	std::cout << "return :" << c << std::endl;
-		//} else {
-		//	std::cout << "End of: " << filename << std::endl;
-		//	if (lua_istable(L, -1)) {
-		//	/*  表放在索引 '-2' 处 */
-		//		lua_pushnil(L);  /* 第一个键 */
-		//		while (lua_next(L, -2) != 0) {
-		//		  /* 使用 '键' （在索引 -2 处） 和 '值' （在索引 -1 处）*/
-		//			string key = popString(L, -2);
-		//			string val = popString(L, -1);
-		//			prop[key] = val;
-		//			/* 移除 '值' ；保留 '键' 做下一次迭代 */
-		//			lua_pop(L, 1);
-		//		}
-		//		saveProp(hash, prop);
-		//	}
+		//auto tab = LuaRef::newTable(L);
+		//for (auto i : prop) {
+		//	tab[i.first]= i.second;
 		//}
+		// int x = lua_pcall(L, 1, LUA_MULTRET, 0);
+		Stack<map<string, string>>::push(L, prop);
+		run();
 	}
 }
 
