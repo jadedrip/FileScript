@@ -13,8 +13,9 @@ namespace po = boost::program_options;
 using namespace std;
 
 map<string, ParserFunc> parsers;
-void initLuaFunction(lua_State*L);
 string fastHashFile(const fs::path& file);
+
+void initLuaFunction(lua_State*L);
 
 std::string datapath;
 
@@ -29,6 +30,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 			scanDirectory(L, file);
 			continue;
 		}
+		initFile(file);
 
 		auto ext = file.extension().string();
 		boost::to_upper(ext);
@@ -52,13 +54,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 			a->second(filename.c_str(), &state);
 		}
 
-		//auto tab = LuaRef::newTable(L);
-		//for (auto i : prop) {
-		//	tab[i.first]= i.second;
-		//}
-		// int x = lua_pcall(L, 1, LUA_MULTRET, 0);
-		Stack<map<string, string>>::push(L, prop);
-		run();
+		run(prop);
 	}
 }
 

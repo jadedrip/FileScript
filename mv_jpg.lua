@@ -29,6 +29,11 @@ InteroperabilityVersion: 0100
 ]]
 key = ""
 function PrintTable(table , level)
+  if not table then
+      print("Nil table")
+	  return
+  end
+
   level = level or 1
   local indent = ""
   for i = 1, level do
@@ -60,8 +65,12 @@ function run( file )
 
 	filename = file["filename"]
 	-- 判断文件是否已经被移动过了
-	-- local d=loadData(filename, "moved") 
-	-- if d then return end
+	local d=loadData("moved") 
+	print("")
+	if d then
+		print ("File " .. filename .. " was already moved, skip it." )
+		return 
+	end
 
 	if not out then
 		out = "out/"
@@ -101,7 +110,10 @@ function run( file )
 		print ( filename .. " to " .. to)
 		move( filename , to )
 		
+
 		-- 保存一个标志
-		saveData( filename, "moved", true )
+		-- saveData("moved", true )
 	end
+	local data = { key= 123, "non" }
+	saveData("data", data)
 end
