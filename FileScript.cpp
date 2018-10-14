@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "FileScript.h"
+#include <curl/curl.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <LuaBridge/Map.h>
@@ -11,15 +12,14 @@
 namespace fs = std::experimental::filesystem;
 namespace po = boost::program_options;
 using namespace std;
-
-map<string, ParserFunc> parsers;
-string fastHashFile(const fs::path& file);
-
-void initLuaFunction(lua_State*L);
+using namespace luabridge;
 
 std::string datapath;
+map<string, ParserFunc> parsers;
+string fastHashFile(const fs::path& file);
+std::string httpGet(const std::string& url);
 
-using namespace luabridge;
+void initLuaFunction(lua_State*L);
 void scanDirectory(lua_State*L, const fs::path& dir)
 {
 	fs::recursive_directory_iterator end_iter;
@@ -91,6 +91,7 @@ int main(int ac, char* av[])
 	std::string source_dir;
 	std::vector<string> defines;
 
+	curl_global_init(CURL_GLOBAL_ALL);
 	init_jpeg_parser();
 
 	// Declare the supported options.
@@ -150,7 +151,7 @@ int main(int ac, char* av[])
 	return 0;
 }
 
-void register_parser(const char* extension, ParserFunc func)
+void registerParser(const char* extension, ParserFunc func)
 {
 	string e = extension;
 	boost::to_upper(e);

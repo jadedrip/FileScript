@@ -59,5 +59,5 @@ void jpeg_parser(const char* filename, map_state* state) {
 }
 
 void init_jpeg_parser() {
-	register_parser(".jpg", jpeg_parser);
+	registerParser(".jpg", jpeg_parser);
 }

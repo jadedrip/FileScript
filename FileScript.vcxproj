@@ -156,6 +156,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="curl.cpp" />
     <ClCompile Include="FileScript.cpp" />
     <ClCompile Include="hash.cpp" />
     <ClCompile Include="jpeg_parser.cpp" />

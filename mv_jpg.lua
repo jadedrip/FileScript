@@ -61,6 +61,9 @@ function PrintTable(table , level)
 end
 
 function run( file )
+	local sp= getRegeoName(39.993253,116.473195)
+	print(sp);
+
 	PrintTable(file)
 
 	filename = file["filename"]

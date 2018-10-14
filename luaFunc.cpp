@@ -1,7 +1,9 @@
 ﻿#include "stdafx.h"
 #include <lua.h>
+#include <regex>
 #include <thread>
 #include <fstream>
+#include <iterator>
 #include <boost/tokenizer.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include <LuaBridge/detail/Iterator.h>
@@ -9,6 +11,7 @@
 using namespace std;
 namespace fs = std::experimental::filesystem;
 
+std::string httpGet(const std::string& url);
 string fastHashFile(const fs::path& file);
 void copyFile(std::string& from, std::string& to, bool move = false)
 {
@@ -185,10 +188,54 @@ int luaLoadData(lua_State* L)
 	}
 }
 
+/*
+	getRegeoName( log, lat ) 
+*/
+int luaGetRegeoName(lua_State*L)
+{
+	// TODO: 将更多数据暴露给 lua
+	auto lat = LuaRef::fromStack(L, -1);
+	auto log = LuaRef::fromStack(L, -2);
+	if (!lat.isNumber() || !log.isNumber())
+		throw runtime_error("getRegeoName( [number] log, [number]lat )  got wrong type");
+	std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=010&l=" + log.tostring() + "," + lat.tostring();
+	std::string req = httpGet(url);
+	std::clog << "Http get:" << req << std::endl;
+	LuaRef(L, req).push();
+	return 1;
+}
+
+/*
+	splice( str, regex )
+*/
+int luaSplice(lua_State*L)
+{
+	auto rex = LuaRef::fromStack(L, -1);
+	auto str = LuaRef::fromStack(L, -2);
+
+	if (!str.isString() || !rex.isString())
+		throw runtime_error("splice([string] str, [string]regex) got wrong type.");
+
+	auto s=str.tostring();
+	std::regex re{ rex };
+	sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+	auto table=LuaRef::newTable(L);
+	for (; iter != sregex_token_iterator(); iter++) {
+		table.append(iter->str());
+	}
+	table.push();
+	return 1;
+}
+
 void initLuaFunction(lua_State*L)
 {
 	lua_register(L, "copy", &luaCopyFile);
 	lua_register(L, "move", &luaMoveFile);
+	lua_register(L, "splice", &luaSplice);
 	lua_register(L, "saveData", &luaSaveData);
 	lua_register(L, "loadData", &luaLoadData);
+	lua_register(L, "getRegeoName", &luaGetRegeoName);
+
 }
+
+// http://gc.ditu.aliyun.com/regeocoding?l=39.993253,116.473195&type=010
