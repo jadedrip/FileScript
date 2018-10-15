@@ -57,12 +57,39 @@ function PrintTable(table , level)
       end
   end
   print(indent .. "}")
+end
 
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+function convStandardString(str)
+	local s=spliceString(str, ",")
+	PrintTable(s)
+	print(s[1])
+	local v=tonumber( trim(s[1].."") )
+	if s[2] then
+		v=v+1/60*tonumber( trim(s[2]) )
+	end
+	if s[3] then
+		v=v+1/3600*tonumber( trim(s[3]) )
+	end
+	print( "conv " .. str " to " .. v)
+	return v
+end
+
+function getName( lat, lon )
+	print( "getName " .. lat .. "," .. log)
+	local tab = getRegeoName(lat, lon)
+	if tab["poi"] then
+		return tab["poi"]
+	end
+	return tab["street"]
 end
 
 function run( file )
 	local sp= getRegeoName(39.993253,116.473195)
-	print(sp);
+	PrintTable(sp);
 
 	PrintTable(file)
 
@@ -99,11 +126,13 @@ function run( file )
 		date = string.gsub( date, ":", "/" )
 		to = to .. date
 
-		if lat  and lon then
+		if lat and lon then
 			print ("lat " .. lat)
-			lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-			lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-			to = to .. lat .. lon
+			local geoLat=convStandardString(lat)
+			local geoLon=convStandardString(lon)
+
+			local name=getName(geoLat, getLon)
+			to = to .. name
 		end
 	
 		print ( filename .. " to " .. to)

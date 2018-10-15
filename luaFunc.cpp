@@ -4,9 +4,13 @@
 #include <thread>
 #include <fstream>
 #include <iterator>
+#include <map>
+#include <unordered_map>
 #include <boost/tokenizer.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include <LuaBridge/detail/Iterator.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace std;
 namespace fs = std::experimental::filesystem;
@@ -18,32 +22,12 @@ void copyFile(std::string& from, std::string& to, bool move = false)
 	typedef boost::tokenizer<boost::char_separator<char> >     tokenizer;
 	static boost::char_separator<char> sep("\\/");
 
-	fs::path f(from);
+	fs::path f(from.begin(), from.end());
 	if (!fs::exists(f)) return;
 
-	string cur;
-	tokenizer tokens(to, sep);
-	for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ) {
-		const string& n = *tok_iter;
-		cur += n + "/";
-
-		if (tok_iter->empty()) {	// 这说明最后是斜杠
-			to += f.filename().string();
-			break;
-		}
-		// 最后一组特殊处理，如果有点认为是文件，否则当目录
-		if (++tok_iter == tokens.end()) {
-			if (string::npos != n.find('.'))
-				break;
-			else {
-				to += "/" + f.filename().string();
-			}
-		}
-
-		if (!fs::exists(cur)) {
-			fs::create_directory(cur);
-		}
-	}
+	fs::path t(to.begin(), to.end());
+	fs::create_directories(t);
+	t /= f.filename();
 
 	if (move) {
 		fs::rename(f, to);
@@ -190,7 +174,59 @@ int luaLoadData(lua_State* L)
 
 /*
 	getRegeoName( log, lat ) 
+	JSON like {
+	"queryLocation": [39.993253, 116.473195],
+	"addrList": [{
+		"type": "street",
+		"status": 1,
+		"name": "阜荣街",
+		"admCode": "110105",
+		"admName": "北京市,朝阳区",
+		"addr": "",
+		"nearestPoint": [116.47361, 39.99380],
+		"distance": 69.203
+	}, {
+		"type": "poi",
+		"status": 1,
+		"name": "新一城购物中心",
+		"id": "ANB000A80GTY",
+		"admCode": "110105",
+		"admName": "北京市,北京市,朝阳区,",
+		"addr": "阜荣街10号(望京广顺南大街口)",
+		"nearestPoint": [116.47318, 39.99327],
+		"distance": 2.236
+	}, {
+		"type": "doorPlate",
+		"status": 0,
+		"name": "",
+		"admCode": "",
+		"admName": "",
+		"nearestPoint": [],
+		"distance": -1
+	}]
+}
 */
+std::map<string,string> parse_json(const std::string& req)
+{
+	map<string, string> m;
+	boost::property_tree::ptree root;
+	boost::property_tree::ptree items;
+	istringstream ss(req);
+	boost::property_tree::read_json(ss, root);
+
+	items = root.get_child("addrList");
+	for (boost::property_tree::ptree::iterator it = items.begin(); it != items.end(); ++it) {
+		for (boost::property_tree::ptree::iterator it = items.begin(); it != items.end(); ++it) {
+			auto item = it->second;
+			auto type = item.get<string>("type");
+			auto name = item.get<string>("name");
+			if(!name.empty()) m[type] = name;
+		}
+	}
+	return m;
+}
+
+unordered_map<string, map<string,string>> regeoCache;
 int luaGetRegeoName(lua_State*L)
 {
 	// TODO: 将更多数据暴露给 lua
@@ -198,10 +234,19 @@ int luaGetRegeoName(lua_State*L)
 	auto log = LuaRef::fromStack(L, -2);
 	if (!lat.isNumber() || !log.isNumber())
 		throw runtime_error("getRegeoName( [number] log, [number]lat )  got wrong type");
-	std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=010&l=" + log.tostring() + "," + lat.tostring();
-	std::string req = httpGet(url);
-	std::clog << "Http get:" << req << std::endl;
-	LuaRef(L, req).push();
+	std::string key = log.tostring() + "," + lat.tostring();
+	auto iter=regeoCache.find(key);
+	if (iter == regeoCache.end()) {
+		std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
+		std::string req = httpGet(url);
+		// std::wclog << L"Http get:" << req << std::endl;
+		auto map = parse_json(req);
+		LuaRef(L, map).push();
+		regeoCache[key] = move(map);
+	} else {
+		auto &map = iter->second;
+		LuaRef(L, map).push();
+	}
 	return 1;
 }
 
@@ -231,7 +276,7 @@ void initLuaFunction(lua_State*L)
 {
 	lua_register(L, "copy", &luaCopyFile);
 	lua_register(L, "move", &luaMoveFile);
-	lua_register(L, "splice", &luaSplice);
+	lua_register(L, "spliceString", &luaSplice);
 	lua_register(L, "saveData", &luaSaveData);
 	lua_register(L, "loadData", &luaLoadData);
 	lua_register(L, "getRegeoName", &luaGetRegeoName);

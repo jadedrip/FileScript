@@ -17,7 +17,6 @@ using namespace luabridge;
 std::string datapath;
 map<string, ParserFunc> parsers;
 string fastHashFile(const fs::path& file);
-std::string httpGet(const std::string& url);
 
 void initLuaFunction(lua_State*L);
 void scanDirectory(lua_State*L, const fs::path& dir)
@@ -85,6 +84,7 @@ void recursiveDirectory(const std::string& script_file, const std::string& sourc
 	lua_close(L);
 }
 
+void parse_json(const std::string& req);
 int main(int ac, char* av[])
 {
 	std::string script_file;
