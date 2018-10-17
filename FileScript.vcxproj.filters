@@ -24,6 +24,12 @@
     <ClInclude Include="FileScript.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="map.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="buffer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -33,6 +39,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="jpeg_parser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="luaFunc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hash.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="map.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="curl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
