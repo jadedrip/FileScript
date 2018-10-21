@@ -1,16 +1,13 @@
 #include "stdafx.h"
 #include <libexif/exif-loader.h>
+#include "map.h"
 #include "FileScript.h"
 
 using namespace std;
-struct JpegData {
-	std::map<string, string> properties;
-	lua_State* state;
-};
 
 void read_exif_entry(ExifEntry *ee, void* user_data)
 {
-	JpegData* data = (JpegData*)user_data;
+	map_state* data = (map_state*)user_data;
 	char v[1024];
 	//  strncpy(t, exif_tag_get_title_in_ifd(ee->tag, exif_entry_get_ifd(ee)), sizeof(t));  
 	//  strncpy(t, exif_tag_get_title_in_ifd(ee->tag, *((ExifIfd*)ifd)), sizeof(t));  
@@ -18,9 +15,10 @@ void read_exif_entry(ExifEntry *ee, void* user_data)
 	ExifIfd ifd=exif_entry_get_ifd(ee);
 	const char* name = exif_tag_get_name_in_ifd(ee->tag, ifd);
 	const char* value = exif_entry_get_value(ee, v, sizeof(v));
-	append_field(data->state, name, value);
-	if(ifd==EXIF_IFD_GPS )
-		data->properties[name] = value;
+	map_append(data, name, value);
+
+	//if(ifd==EXIF_IFD_GPS )
+	//	map_append(data, name, value);
 
 	// printf("%s: %s\n", name, value);
 	//printf("%s: %s\n"
@@ -43,29 +41,23 @@ double parse_degree(const std::string& degree) {
 	return 0.0;
 }
 
-void set_gps(lua_State* state, std::map<string, string>& properties) {
-	if (properties.empty()) return;
-	// GPSLatitude: 30, 15, 53.3556
-	std::string& s_latitude =properties["GPSLatitude"];
-	if (s_latitude.empty()) return;
-	std::string& longitud = properties["GPSLongitude"];
-	if (longitud.empty()) return;
+//void set_gps(	map_state *stat) {
+//	// GPSLatitude: 30, 15, 53.3556
+//	std::string& s_latitude =properties["GPSLatitude"];
+//	if (s_latitude.empty()) return;
+//	std::string& longitud = properties["GPSLongitude"];
+//	if (longitud.empty()) return;
+//
+//	double latitude =parse_degree(s_latitude);
+//}
 
-	double latitude =parse_degree(s_latitude);
-}
-
-void jpeg_parser(const char* filename, lua_State* state) {
-	auto *data = new JpegData();
-	data->state = state;
+void jpeg_parser(const char* filename, map_state* state) {
 	auto* ed=exif_data_new_from_file(filename);
-	exif_data_foreach_content(ed, read_exif_content, data);
+	exif_data_foreach_content(ed, read_exif_content, state);
 	exif_data_unref(ed);
-
-	set_gps(state, data->properties);
-
-	delete data;
+	// set_gps(state);
 }
 
 void init_jpeg_parser() {
-	register_parser(".jpg", jpeg_parser);
+	registerParser(".jpg", jpeg_parser);
 }

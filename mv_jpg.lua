@@ -27,8 +27,78 @@ GPSDateStamp: 2016:12:24
 InteroperabilityIndex: R98
 InteroperabilityVersion: 0100
 ]]
+key = ""
+function PrintTable(table , level)
+  if not table then
+      print("Nil table")
+	  return
+  end
+
+  level = level or 1
+  local indent = ""
+  for i = 1, level do
+    indent = indent.."  "
+  end
+
+  if key ~= "" then
+    print(indent..key.." ".."=".." ".."{")
+  else
+    print(indent .. "{")
+  end
+
+  key = ""
+  for k,v in pairs(table) do
+     if type(v) == "table" then
+        key = k
+        PrintTable(v, level + 1)
+     else
+        local content = string.format("%s%s = %s", indent .. "  ",tostring(k), tostring(v))
+      print(content)  
+      end
+  end
+  print(indent .. "}")
+end
+
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+function convStandardString(str)
+	local s=spliceString(str, ",")
+	local v=tonumber( trim(s[1].."") )
+	if s[2] then
+		v=v+1/60*tonumber( trim(s[2]) )
+	end
+	if s[3] then
+		v=v+1/3600*tonumber( trim(s[3]) )
+	end
+	return v
+end
+
+function getName( lat, lon )
+	local tab = getRegeoName(lat, lon)
+	if tab["poi"] then
+		return tab["poi"]
+	end
+	return tab["street"]
+end
+
 function run( file )
-	-- print ("out = " .. out)
+--	PrintTable(file)
+
+	filename = file["filename"]
+	-- 判断文件是否已经被移动过了
+	local d=loadData("moved") 
+	
+	if d then
+		print ("File " .. filename .. " was already moved, skip it." )
+		return 
+	end
+
+	if not out then
+		out = "out/"
+	end
+	print ("out = " .. out)
 	c = string.sub(out,-1,1)
 	if c =="\\" or c == "/" then
 		to = out
@@ -40,22 +110,29 @@ function run( file )
 	lat = file["GPSLatitude"]
 	lon = file["GPSLongitude"]
 
-	filename = 	file["filename"]
-	if date  and lat  and lon  then
+	if not date then
+		date=file["DateTime"]
+	end
+
+	if date then
 		date = string.sub( date, 0, 7 )
 		date = string.gsub( date, ":", "/" )
 		to = to .. date
 
-		print ("lat " .. lat)
-		lat = string.gsub( lat, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-		lon =  string.gsub( lon, "^(%d+),%s*(%d+),.*$", "_%1_%2" )
-		to = to .. lat .. lon
+		if lat and lon then
+			local geoLat=convStandardString(lat)
+			local geoLon=convStandardString(lon)
+			local name=getName(geoLat, geoLon)
+			to = to .. "_" .. name
+		end
 	
-		print ( filename .. " to " .. to)
+		printUtf8( filename .. " to " .. to)
 		move( filename , to )
 		-- iPhone 会有 .mov 文件 
 		filename = string.gsub( filename, ".JPG$", ".mov" )
-		print ( filename .. " to " .. to)
 		move( filename , to )
+
+		-- 保存一个标志
+		saveData("moved", true )
 	end
 end
