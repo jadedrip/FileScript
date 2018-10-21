@@ -117,6 +117,7 @@ fs::path getDataPath()
 	dir /= p1;
 	dir /= p2;
 	dir /= hashString;
+	// clog << "File " << currentFile->string() << " hash to :" << dir.string() << endl;
 	return dir;
 }
 
@@ -171,6 +172,8 @@ int luaLoadData(lua_State* L)
 	fs::path path = getDataPath();
 	path /= key.tostring();
 
+	if (!fs::exists(path)) return 0;
+
 	ifstream file(path);
 	if (file.is_open()) {
 		char c = file.peek();
@@ -182,6 +185,7 @@ int luaLoadData(lua_State* L)
 			v = v.substr(1, v.size() - 2);
 			LuaRef d(L, v);
 			d.push();
+			break;
 		}
 		case 't':
 		case 'f':
@@ -190,6 +194,7 @@ int luaLoadData(lua_State* L)
 			file >> v;
 			LuaRef d(L, v != "false");
 			d.push();
+			break;
 		}
 		case '{':// TODO: read json file
 			return 0;
@@ -199,6 +204,7 @@ int luaLoadData(lua_State* L)
 			file >> n;
 			LuaRef d(L, n);
 			d.push();
+			break;
 		}
 		}
 		return 1;
@@ -261,6 +267,7 @@ std::map<string,string> parse_json(const std::string& req)
 	return m;
 }
 
+extern boost::property_tree::ptree g_config;
 unordered_map<string, map<string,string>> regeoCache;
 int luaGetRegeoName(lua_State*L)
 {
@@ -270,14 +277,24 @@ int luaGetRegeoName(lua_State*L)
 	if (!lat.isNumber() || !log.isNumber())
 		throw runtime_error("getRegeoName( [number] log, [number]lat )  got wrong type");
 	std::string key = log.tostring() + "," + lat.tostring();
+
+	auto c=g_config.get<string>("regeo." + key);
+	if (!c.empty()) {
+
+	}
 	auto iter=regeoCache.find(key);
 	if (iter == regeoCache.end()) {
-		std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
-		std::string req = httpGet(url);
-		// std::wclog << L"Http get:" << req << std::endl;
-		auto map = parse_json(req);
-		LuaRef(L, map).push();
-		regeoCache[key] = move(map);
+		std::string req;
+		try {
+			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
+			req = httpGet(url);
+			// std::wclog << L"Http get:" << req << std::endl;
+			auto map = parse_json(req);
+			LuaRef(L, map).push();
+			regeoCache[key] = move(map);
+		} catch (exception & e) {
+			cerr << "Get regeo " << lat << "," << log << " failed with " << e.what() << "\r\n\t" << req << endl;
+		}
 	} else {
 		auto &map = iter->second;
 		LuaRef(L, map).push();
@@ -325,7 +342,7 @@ void initLuaFunction(lua_State*L)
 	lua_register(L, "spliceString", &luaSplice);
 	lua_register(L, "saveData", &luaSaveData);
 	lua_register(L, "loadData", &luaLoadData);
-	lua_register(L, "getRegeoName", &luaGetRegeoName);
+	lua_register(L, "getRegeoName", &luaGetRegeoName);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 	lua_register(L, "printUtf8", &luaPrintUtf8);
 }
 

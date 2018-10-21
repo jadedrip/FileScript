@@ -23,36 +23,39 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 	fs::recursive_directory_iterator end_iter;
 	for (fs::recursive_directory_iterator i(dir); i != end_iter; i++) {
 		auto file = i->path();
-
-		if (fs::is_directory(file)) {
-			scanDirectory(L, file);
-			continue;
-		}
-		initFile(file);
-
-		auto ext = file.extension().string();
-		boost::to_upper(ext);
-		std::cout << "Find: " << file << std::endl;
-
 		auto filename = file.string();
-		LuaRef run = getGlobal(L, "run");        // 获取函数，压入栈中  
+		try {
+			if (fs::is_directory(file)) {
+				scanDirectory(L, file);
+				continue;
+			}
+			initFile(file);
 
-		// 准备参数
-		std::map<std::string, std::string> prop;
-		prop["filename"] = filename;
-		//string hash=fastHashFile(file);
-		//prop["fast_hash"] = hash;
+			auto ext = file.extension().string();
+			boost::to_upper(ext);
+			std::cout << "Find: " << file << std::endl;
 
-		map_state state;
-		state.data = &prop;
+			LuaRef run = getGlobal(L, "run");        // 获取函数，压入栈中  
 
-		// 运行插件
-		auto a = parsers.find(ext);
-		if (a != parsers.end()) {
-			a->second(filename.c_str(), &state);
+			// 准备参数
+			std::map<std::string, std::string> prop;
+			prop["filename"] = filename;
+			//string hash=fastHashFile(file);
+			//prop["fast_hash"] = hash;
+
+			map_state state;
+			state.data = &prop;
+
+			// 运行插件
+			auto a = parsers.find(ext);
+			if (a != parsers.end()) {
+				a->second(filename.c_str(), &state);
+			}
+
+			run(prop);
+		} catch (exception& e) {
+			std::cerr << "File "<< filename << " exception: " << e.what() << std::endl;
 		}
-
-		auto v=run(prop);
 	}
 }
 

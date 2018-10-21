@@ -87,6 +87,12 @@ function run( file )
 --	PrintTable(file)
 
 	filename = file["filename"]
+
+	if not loadData then
+		print("Can't find loadData function.")
+		return
+	end
+
 	-- 判断文件是否已经被移动过了
 	local d=loadData("moved") 
 	
