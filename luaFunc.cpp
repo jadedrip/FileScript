@@ -12,18 +12,20 @@
 #include <LuaBridge/detail/Iterator.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#include <boost/filesystem.hpp>
 
 #include "buffer.hpp"
 #include "FileScript.h"
 
 using namespace std;
+using namespace luabridge;
+thread_local string hashString;
+thread_local const fs::path* currentFile;
+Buffer<wchar_t> wbuffer;
+Buffer<char> buffer;
 
 std::string httpGet(const std::string& url);
 string fastHashFile(const fs::path& file);
 
-Buffer<wchar_t> wbuffer;
-Buffer<char> buffer;
 wstring fromUtf8(const string& utf8)
 {
 	size_t sz=utf8.size();
@@ -40,6 +42,11 @@ string toGbk(const wstring& unicode)
 
 	int x = ::WideCharToMultiByte(CP_ACP, 0, unicode.c_str(), (int)unicode.size(), ptr, (int)sz*2, 0, 0);
 	return string(ptr, x);
+}
+
+string utf8ToGbk(const string& utf8)
+{
+	return toGbk(fromUtf8(utf8));
 }
 
 void copyFile(std::string& from, std::string& to, bool move = false)
@@ -94,10 +101,6 @@ int luaMoveFile(lua_State* L)
 	copyFile(from, to, true);
 	return 0;
 }
-
-using namespace luabridge;
-thread_local string hashString;
-thread_local const fs::path* currentFile;
 
 void initFile(const fs::path& f)
 {
@@ -214,95 +217,6 @@ int luaLoadData(lua_State* L)
 }
 
 /*
-	getRegeoName( log, lat ) 
-	JSON like {
-	"queryLocation": [39.993253, 116.473195],
-	"addrList": [{
-		"type": "street",
-		"status": 1,
-		"name": "阜荣街",
-		"admCode": "110105",
-		"admName": "北京市,朝阳区",
-		"addr": "",
-		"nearestPoint": [116.47361, 39.99380],
-		"distance": 69.203
-	}, {
-		"type": "poi",
-		"status": 1,
-		"name": "新一城购物中心",
-		"id": "ANB000A80GTY",
-		"admCode": "110105",
-		"admName": "北京市,北京市,朝阳区,",
-		"addr": "阜荣街10号(望京广顺南大街口)",
-		"nearestPoint": [116.47318, 39.99327],
-		"distance": 2.236
-	}, {
-		"type": "doorPlate",
-		"status": 0,
-		"name": "",
-		"admCode": "",
-		"admName": "",
-		"nearestPoint": [],
-		"distance": -1
-	}]
-}
-*/
-std::map<string,string> parse_json(const std::string& req)
-{
-	map<string, string> m;
-	boost::property_tree::ptree root;
-	boost::property_tree::ptree items;
-	istringstream ss(req);
-	boost::property_tree::read_json(ss, root);
-
-	items = root.get_child("addrList");
-	for (boost::property_tree::ptree::iterator it = items.begin(); it != items.end(); ++it) {
-		for (boost::property_tree::ptree::iterator it = items.begin(); it != items.end(); ++it) {
-			auto item = it->second;
-			auto type = item.get<string>("type");
-			auto name = item.get<string>("name");
-			if(!name.empty()) m[type] = name;
-		}
-	}
-	return m;
-}
-
-extern boost::property_tree::ptree g_config;
-unordered_map<string, map<string,string>> regeoCache;
-int luaGetRegeoName(lua_State*L)
-{
-	// TODO: 将更多数据暴露给 lua
-	auto lat = LuaRef::fromStack(L, -1);
-	auto log = LuaRef::fromStack(L, -2);
-	if (!lat.isNumber() || !log.isNumber())
-		throw runtime_error("getRegeoName( [number] log, [number]lat )  got wrong type");
-	std::string key = log.tostring() + "," + lat.tostring();
-
-	auto c=g_config.get<string>("regeo." + key);
-	if (!c.empty()) {
-
-	}
-	auto iter=regeoCache.find(key);
-	if (iter == regeoCache.end()) {
-		std::string req;
-		try {
-			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
-			req = httpGet(url);
-			// std::wclog << L"Http get:" << req << std::endl;
-			auto map = parse_json(req);
-			LuaRef(L, map).push();
-			regeoCache[key] = move(map);
-		} catch (exception & e) {
-			cerr << "Get regeo " << lat << "," << log << " failed with " << e.what() << "\r\n\t" << req << endl;
-		}
-	} else {
-		auto &map = iter->second;
-		LuaRef(L, map).push();
-	}
-	return 1;
-}
-
-/*
 	splice( str, regex )
 */
 int luaSplice(lua_State*L)
@@ -335,6 +249,7 @@ int luaPrintUtf8(lua_State*L)
 	return 0;
 }
 
+int luaGetGeoInfo(lua_State*L);
 void initLuaFunction(lua_State*L)
 {
 	lua_register(L, "copy", &luaCopyFile);
@@ -342,7 +257,7 @@ void initLuaFunction(lua_State*L)
 	lua_register(L, "spliceString", &luaSplice);
 	lua_register(L, "saveData", &luaSaveData);
 	lua_register(L, "loadData", &luaLoadData);
-	lua_register(L, "getRegeoName", &luaGetRegeoName);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+	lua_register(L, "getGeoInfo", &luaGetGeoInfo);
 	lua_register(L, "printUtf8", &luaPrintUtf8);
 }
 

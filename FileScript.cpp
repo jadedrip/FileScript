@@ -6,6 +6,7 @@
 #include <curl/curl.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <LuaBridge/Map.h>
 #include <LuaBridge/LuaBridge.h>
 
@@ -17,13 +18,14 @@ std::string datapath;
 map<string, ParserFunc> parsers;
 string fastHashFile(const fs::path& file);
 
+boost::property_tree::ptree g_config;
 void initLuaFunction(lua_State*L);
 void scanDirectory(lua_State*L, const fs::path& dir)
 {
 	fs::recursive_directory_iterator end_iter;
 	for (fs::recursive_directory_iterator i(dir); i != end_iter; i++) {
 		auto file = i->path();
-		auto filename = file.string();
+		auto filename = file.u8string();
 		try {
 			if (fs::is_directory(file)) {
 				scanDirectory(L, file);
@@ -45,7 +47,6 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 
 			map_state state;
 			state.data = &prop;
-
 			// 运行插件
 			auto a = parsers.find(ext);
 			if (a != parsers.end()) {
@@ -86,7 +87,7 @@ void recursiveDirectory(const std::string& script_file, const std::string& sourc
 	lua_close(L);
 }
 
-void parse_json(const std::string& req);
+#include "radix_tree/radix_tree.hpp"
 int main(int ac, char* av[])
 {
 	std::string script_file;
@@ -95,6 +96,16 @@ int main(int ac, char* av[])
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	init_jpeg_parser();
+
+	if (fs::exists("fileScript.conf")) {
+		ifstream ss("fileScript.conf");
+		try {
+			boost::property_tree::read_json(ss, g_config);
+		} catch (exception &e) {
+			cerr << "Can't load config file fileScript.conf: " << e.what() << endl;
+			return -1;
+		}
+	}
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");

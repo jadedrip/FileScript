@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="geohash">
+      <UniqueIdentifier>{96be4cde-664c-4ee0-acea-7bcbf1355f80}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -29,6 +32,9 @@
     </ClInclude>
     <ClInclude Include="buffer.hpp">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="geohash\geohash.h">
+      <Filter>geohash</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -53,9 +59,16 @@
     <ClCompile Include="curl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="geohash\geohash.cpp">
+      <Filter>geohash</Filter>
+    </ClCompile>
+    <ClCompile Include="luaGeo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mv_jpg.lua" />
     <None Include="README.md" />
+    <None Include="fileScript.conf" />
   </ItemGroup>
 </Project>

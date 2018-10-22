@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="buffer.hpp" />
     <ClInclude Include="FileScript.h" />
+    <ClInclude Include="geohash\geohash.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -159,9 +160,13 @@
   <ItemGroup>
     <ClCompile Include="curl.cpp" />
     <ClCompile Include="FileScript.cpp" />
+    <ClCompile Include="geohash\geohash.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="hash.cpp" />
     <ClCompile Include="jpeg_parser.cpp" />
     <ClCompile Include="luaFunc.cpp" />
+    <ClCompile Include="luaGeo.cpp" />
     <ClCompile Include="map.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -171,6 +176,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="fileScript.conf" />
     <None Include="mv_jpg.lua" />
     <None Include="README.md" />
   </ItemGroup>

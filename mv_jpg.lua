@@ -75,8 +75,8 @@ function convStandardString(str)
 	return v
 end
 
-function getName( lat, lon )
-	local tab = getRegeoName(lat, lon)
+function getGeoName( lat, lon )
+	local tab = getGeoInfo(lat, lon)
 	if tab["poi"] then
 		return tab["poi"]
 	end
@@ -128,8 +128,8 @@ function run( file )
 		if lat and lon then
 			local geoLat=convStandardString(lat)
 			local geoLon=convStandardString(lon)
-			local name=getName(geoLat, geoLon)
-			to = to .. "_" .. name
+			local name=getGeoName(geoLat, geoLon)
+			to = to .. "/" .. name
 		end
 	
 		printUtf8( filename .. " to " .. to)
