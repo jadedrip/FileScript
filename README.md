@@ -15,15 +15,36 @@ lua 可以通过内置的 move 函数来移动文件。
 
 lua 目前支持 
 	
-	move (from, to)		-- 移动或改名（会自动创建目标目录）
-	copy (from, to)		-- 复制
-	
+	move (from, to)					-- 移动或改名（会自动创建目标目录）
+	copy (from, to)					-- 复制
+	splice(str, regex)				-- 根据正则式切分字符串
+	saveData(key, data)				-- 为当前内容的文件关联保存一个数据（文件唯一性通过内容 hash 来确定），目前可以保存 bool，string
+	loadData(key)					-- 读取 saveData 关联到当前文件的数据
+	getGeoInfo(latitude, longitude)	-- 根据经纬度获取地理名称（默认通过 ali 地图api获取，如果为配置，仅支持中国）
+	printUtf8(string)				-- 打印 utf8 字符串
 
-目前发布第一个版本 v0.9 下载地址：
+目前发布测试版本 v0.9.2 下载地址：
 
-https://github.com/jadedrip/FileScript/releases/download/0.9/file_script_0.9.zip
+https://github.com/jadedrip/FileScript/releases/download/0.9.2/file_script_0.9.2.zip
 
 ** 如果无法执行可能需要下载 vc 运行库： https://download.visualstudio.microsoft.com/download/pr/100349138/88b50ce70017bf10f2d56d60fcba6ab1/VC_redist.x86.exe **
+
+## 配置
+
+允许在 fileScript.conf 文件中进行配置，这文件 **必须是** utf-8 (无 BOM) 格式，目前可以配置经纬:
+
+	{
+		"location" : [
+			{
+				"latitude" : 15.870032,
+				"longitude" : 100.992541,
+				"distance" : 5000,
+				"info" : {
+					"poi": "泰国"
+				}
+			}
+		]
+	}
 
 ## 编译
 
