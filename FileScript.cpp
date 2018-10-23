@@ -25,6 +25,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 	fs::recursive_directory_iterator end_iter;
 	for (fs::recursive_directory_iterator i(dir); i != end_iter; i++) {
 		auto file = i->path();
+		if (!fs::exists(file)) continue;
 		auto filename = file.u8string();
 		try {
 			if (fs::is_directory(file)) {

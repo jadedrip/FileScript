@@ -92,20 +92,25 @@ string utf8ToGbk(const string& utf8);
 
 void initGeoFromConfig()
 {
-	auto iter=g_config.get_child("location");
-	for (auto &i : iter) {
-		double latitude=i.second.get<double>("latitude");
-		double longitude = i.second.get<double>("longitude");
-		double distance = i.second.get<double>("distance");
+	if (g_config.empty()) return;
+	try {
+		auto iter = g_config.get_child("location");
+		for (auto &i : iter) {
+			double latitude = i.second.get<double>("latitude");
+			double longitude = i.second.get<double>("longitude");
+			double distance = i.second.get<double>("distance");
 
-		auto h=getGeoHash(latitude, longitude, distance);
+			auto h = getGeoHash(latitude, longitude, distance);
 
-		map<string, string> info;
-		for (auto &l : i.second.get_child("info")) {
-			string v = l.second.get<string>("");
-			info[l.first] = v;
+			map<string, string> info;
+			for (auto &l : i.second.get_child("info")) {
+				string v = l.second.get<string>("");
+				info[l.first] = v;
+			}
+			currentGeo[h] = info;
 		}
-		currentGeo[h] = info;
+	} catch (exception & e) {
+		
 	}
 	currentGeoInited = true;
 
@@ -137,8 +142,7 @@ std::map<string, string> loadFromConfig(double latitude, double longitude)
 	std::map<string, string>* m = nullptr;
 	for (auto& i : vec) {
 		auto k = i->first;
-		auto x=key.find_first_of(k);
-		if (x == 0) {
+		if (key.substr(0, k.size()) == k) {
 			if (i->first.size() > sz) {
 				sz = i->first.size();
 				m = &(i->second);
