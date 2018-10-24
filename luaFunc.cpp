@@ -171,7 +171,7 @@ int luaLoadData(lua_State* L)
 	auto key = LuaRef::fromStack(L, -1);
 	if (!key.isString())
 		throw std::runtime_error("loadData([string] key) got wrong type");
-	std::clog << "loadData: " << key.tostring() << std::endl;
+	// std::clog << "loadData: " << key.tostring() << std::endl;
 	fs::path path = getDataPath();
 	path /= key.tostring();
 

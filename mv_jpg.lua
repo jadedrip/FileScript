@@ -72,10 +72,11 @@ function convStandardString(str)
 	if s[3] then
 		v=v+1/3600*tonumber( trim(s[3]) )
 	end
+	-- print( "str " .. str .. " to " .. v )
 	return v
 end
 
-function getGeoName( lat, lon )
+function getName( lat, lon )
 	local tab = getGeoInfo(lat, lon)
 	if tab["poi"] then
 		return tab["poi"]
@@ -87,12 +88,7 @@ function run( file )
 --	PrintTable(file)
 
 	filename = file["filename"]
-
-	if not loadData then
-		print("Can't find loadData function.")
-		return
-	end
-
+	
 	-- 判断文件是否已经被移动过了
 	local d=loadData("moved") 
 	
@@ -128,16 +124,26 @@ function run( file )
 		if lat and lon then
 			local geoLat=convStandardString(lat)
 			local geoLon=convStandardString(lon)
-			local name=getGeoName(geoLat, geoLon)
-			to = to .. "/" .. name
+			local name=getName(geoLat, geoLon)
+			if not name then return end
+			
+			to = to .. "_" .. name
+			
+			printUtf8( filename .. " at " .. geoLat .. "," .. geoLon .. " to " .. to )
+		else
+			printUtf8( filename .. " to " .. to)
 		end
 	
-		printUtf8( filename .. " to " .. to)
+
 		move( filename , to )
 		-- iPhone 会有 .mov 文件 
 		filename = string.gsub( filename, ".JPG$", ".mov" )
 		move( filename , to )
 
+		-- 还有个 HEIC 文件
+		filename = string.gsub( filename, ".mov$", ".HEIC" )
+		move( filename , to )
+		
 		-- 保存一个标志
 		saveData("moved", true )
 	end
