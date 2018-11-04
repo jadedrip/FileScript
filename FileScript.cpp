@@ -26,7 +26,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 	for (fs::recursive_directory_iterator i(dir); i != end_iter; i++) {
 		auto file = i->path();
 		if (!fs::exists(file)) continue;
-		auto filename = file.u8string();
+		auto filename = file.string();
 		try {
 			if (fs::is_directory(file)) {
 				scanDirectory(L, file);
@@ -42,7 +42,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 
 			// 准备参数
 			std::map<std::string, std::string> prop;
-			prop["filename"] = filename;
+			prop["filename"] = file.u8string();
 			//string hash=fastHashFile(file);
 			//prop["fast_hash"] = hash;
 
@@ -52,6 +52,7 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 			auto a = parsers.find(ext);
 			if (a != parsers.end()) {
 				a->second(filename.c_str(), &state);
+
 			}
 
 			run(prop);

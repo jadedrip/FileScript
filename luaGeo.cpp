@@ -176,7 +176,7 @@ int luaGetGeoInfo(lua_State*L)
 		try {
 			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
 			req = httpGet(url);
-			std::clog << "Http get: " << url << "\r\n\t" << utf8ToGbk(req) << std::endl;
+			// std::clog << "Http get: " << url << "\r\n\t" << utf8ToGbk(req) << std::endl;
 			parseAliyunJson(req, map);
 			if (map.empty()) {
 				clog << "Can't get name for " << key << endl;

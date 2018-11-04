@@ -108,7 +108,7 @@ function run( file )
 		to = out .. "/"
 	end
 
-	date=file["GPSDateStamp"]
+	date= file["GPSDateStamp"]
 	lat = file["GPSLatitude"]
 	lon = file["GPSLongitude"]
 
@@ -138,10 +138,6 @@ function run( file )
 		move( filename , to )
 		-- iPhone 会有 .mov 文件 
 		filename = string.gsub( filename, ".JPG$", ".mov" )
-		move( filename , to )
-
-		-- 还有个 HEIC 文件
-		filename = string.gsub( filename, ".mov$", ".HEIC" )
 		move( filename , to )
 		
 		-- 保存一个标志
