@@ -178,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fileScript.conf" />
+    <None Include="get_gps.lua" />
     <None Include="mv_jpg.lua" />
     <None Include="README.md" />
   </ItemGroup>

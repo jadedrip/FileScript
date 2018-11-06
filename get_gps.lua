@@ -41,20 +41,23 @@ function PrintTable(table , level)
   end
 
   if key ~= "" then
-    print(indent..key.." ".."=".." ".."{")
+    printUtf8(indent.. "\"" .. key.."\" "..":".." ".."{")
   else
     print(indent .. "{")
   end
 
   key = ""
-  for k,v in pairs(table) do
+    for k,v in pairs(table) do
      if type(v) == "table" then
         key = k
         PrintTable(v, level + 1)
-     else
-        local content = string.format("%s%s = %s", indent .. "  ",tostring(k), tostring(v))
-      print(content)  
-      end
+     elseif type(v) == "number" then
+        local content = string.format("%s\"%s\" : %s,", indent .. "  ", tostring(k), tostring(v))
+		printUtf8(content)  
+  	else
+        local content = string.format("%s\"%s\" : \"%s\",", indent .. "  ", tostring(k), tostring(v))
+		printUtf8(content)  
+    end
   end
   print(indent .. "}")
 end
@@ -73,45 +76,27 @@ function convStandardString(str)
 		v=v+1/3600*tonumber( trim(s[3]) )
 	end
 	-- print( "str " .. str .. " to " .. v )
+
 	v=v-v%0.001
 	return v
 end
 
 function getName( lat, lon )
 	local tab = getGeoInfo(lat, lon)
-	if tab["name"] then
-		return tab["name"]
-	elseif tab["admName"] then
-		return tab["admName"]
+	if tab["poi"] then
+		return tab["poi"]
 	end
 	return tab["street"]
 end
+
+all = {}
 
 function run( file )
 --	PrintTable(file)
 
 	filename = file["filename"]
 	
-	-- 判断文件是否已经被移动过了
-	-- local d=loadData("moved") 
-	
-	-- if d then
-	--	print ("File " .. filename .. " was already moved, skip it." )
-	--	return 
-	-- end
-
-	if not out then
-		out = "out/"
-	end
-	print ("out = " .. out)
-	c = string.sub(out,-1,1)
-	if c =="\\" or c == "/" then
-		to = out
-	else
-		to = out .. "/"
-	end
-
-	date= file["GPSDateStamp"]
+	date=file["GPSDateStamp"]
 	lat = file["GPSLatitude"]
 	lon = file["GPSLongitude"]
 
@@ -122,7 +107,6 @@ function run( file )
 	if date then
 		date = string.sub( date, 0, 7 )
 		date = string.gsub( date, ":", "/" )
-		to = to .. date
 
 		if lat and lon then
 			local geoLat=convStandardString(lat)
@@ -130,20 +114,20 @@ function run( file )
 			local name=getName(geoLat, geoLon)
 			if not name then return end
 			
-			to = to .. "_" .. name
-			
-			printUtf8( filename .. " at " .. geoLat .. "," .. geoLon .. " to " .. to )
-		else
-			printUtf8( filename .. " to " .. to)
-		end
-	
+			local data = {}
+			data["latitude"] = geoLat
+			data["longitude"] = geoLon
+			data["amap"] = "http://ditu.amap.com/maps?q=".. geoLat .. "," .. geoLon
+			local info =  { poi = "" }
+			data["info"] = info
+			-- ditu.amap.com/maps?q=35.170318,107.821668
+			all[name] = data
 
-		move( filename , to )
-		-- iPhone 会有 .mov 文件 
-		filename = string.gsub( filename, ".JPG$", ".mov" )
-		move( filename , to )
-		
-		-- 保存一个标志
-		-- saveData("moved", true )
+			-- PrintTable(data)
+		end
 	end
+end
+
+function finish()
+	PrintTable(all)
 end

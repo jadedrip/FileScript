@@ -86,6 +86,11 @@ void recursiveDirectory(const std::string& script_file, const std::string& sourc
 
 	fs::path fullpath(source_dir);
 	scanDirectory(L, fullpath);
+
+	LuaRef fun = getGlobal(L, "finish");        // 获取函数，压入栈中  
+	if (fun) {
+		fun();
+	}
 	lua_close(L);
 }
 

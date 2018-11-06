@@ -66,6 +66,15 @@ void parseAliyunJson(const std::string& req, std::map<string, string> &m)
 			auto type = item.get<string>("type");
 			auto name = item.get<string>("name");
 			if (!name.empty()) m[type] = name;
+
+			if (type == "street") {
+				string n=item.get<string>("admName");
+				for (auto &c : n) {
+					if (c == ',') c = '_';
+				}
+
+				m["admName"] = n;
+			}
 		}
 	}
 }
@@ -174,7 +183,7 @@ int luaGetGeoInfo(lua_State*L)
 	if (iter == regeoCache.end()) {
 		std::string req;
 		try {
-			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=110&l=" + key;
+			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=111&l=" + key;
 			req = httpGet(url);
 			// std::clog << "Http get: " << url << "\r\n\t" << utf8ToGbk(req) << std::endl;
 			parseAliyunJson(req, map);

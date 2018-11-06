@@ -70,5 +70,6 @@
     <None Include="mv_jpg.lua" />
     <None Include="README.md" />
     <None Include="fileScript.conf" />
+    <None Include="get_gps.lua" />
   </ItemGroup>
 </Project>
