@@ -42,7 +42,10 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 
 			// 准备参数
 			std::map<std::string, std::string> prop;
-			prop["filename"] = file.u8string();
+			std::string s=file.u8string();
+			size_t idx = s.find_last_of('.');
+			prop["shortname"] = s.substr(0, idx);
+			prop["filename"] = std::move(s);
 			//string hash=fastHashFile(file);
 			//prop["fast_hash"] = hash;
 
@@ -86,15 +89,17 @@ void recursiveDirectory(const std::string& script_file, const std::string& sourc
 
 	fs::path fullpath(source_dir);
 	scanDirectory(L, fullpath);
-
-	LuaRef fun = getGlobal(L, "finish");        // 获取函数，压入栈中  
-	if (fun) {
-		fun();
+	{
+		LuaRef fun = getGlobal(L, "finish");        // 获取函数，压入栈中  
+		if (fun) {
+			fun();
+		}
 	}
 	lua_close(L);
 }
 
 #include "radix_tree/radix_tree.hpp"
+void init_heif_parser();
 int main(int ac, char* av[])
 {
 	std::string script_file;
@@ -103,6 +108,7 @@ int main(int ac, char* av[])
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	init_jpeg_parser();
+	init_heif_parser();
 
 	if (fs::exists("fileScript.conf")) {
 		ifstream ss("fileScript.conf");

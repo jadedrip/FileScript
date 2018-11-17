@@ -91,6 +91,7 @@ function run( file )
 --	PrintTable(file)
 
 	filename = file["filename"]
+	shortname = file["shortname"]
 	
 	-- 判断文件是否已经被移动过了
 	-- local d=loadData("moved") 
@@ -140,8 +141,7 @@ function run( file )
 
 		move( filename , to )
 		-- iPhone 会有 .mov 文件 
-		filename = string.gsub( filename, ".JPG$", ".mov" )
-		move( filename , to )
+		move( shortname .. ".mov" , to )
 		
 		-- 保存一个标志
 		-- saveData("moved", true )
