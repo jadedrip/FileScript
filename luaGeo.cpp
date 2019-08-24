@@ -240,6 +240,10 @@ int luaGetGeoInfo(lua_State*L)
 	double dLat = lat;
 	double dLog = log;
 
+	if (dLat == 180.0 && dLog == 180.0) {
+		return 0;
+	}
+
 	map<string, string> map = loadFromConfig(dLat, dLog);
 	if (!map.empty()) {
 		LuaRef(L, map).push();
@@ -270,8 +274,11 @@ int luaGetGeoInfo(lua_State*L)
 			parseAmapXml(req, map);
 			if (map.empty()) {
 				clog << "Can't get name for " << key << endl;
+				return 0;
 			}
-			LuaRef(L, map).push();
+			else {
+				LuaRef(L, map).push();
+			}
 			regeoCache[key] = move(map);
 		} catch (exception & e) {
 			//cerr << "Get regeo " << dLat << "," << dLog << " failed with " << e.what() << "\r\n\t" << req << endl;

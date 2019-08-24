@@ -82,6 +82,7 @@ function getName( lat, lon )
 	-- PrintTable(tab)
 	if tab==nil then return "" end
 
+	PrintTable(tab)
 	if tab["city"] then
 		return tab["city"]
 	elseif tab["province"] then
