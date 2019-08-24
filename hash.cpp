@@ -6,10 +6,9 @@
 #include <boost/algorithm/hex.hpp>
 #include "FileScript.h"
 
-using namespace std;
 using namespace CryptoPP;
 // 快速 hash 一个文件，如果文件大小小于 4M，全文件 sha256，否则使用长度+前4194304字节
-string fastHashFile(const fs::path& file)
+std::string fastHashFile(const fs::path& file)
 {
 	SHA256 sha256;
 	int digestSize = sha256.DigestSize();
@@ -21,7 +20,7 @@ string fastHashFile(const fs::path& file)
 	}
 
 	char buffer[4096];
-	ifstream fstream(file, ios::in | ios::binary);
+	std::ifstream fstream(file, std::ios::in | std::ios::binary);
 	if (fstream.is_open()) {
 		for (int i = 0; i < 1024; i++) {
 			if (fstream.eof()) break;
@@ -31,7 +30,7 @@ string fastHashFile(const fs::path& file)
 		}
 	}
 	sha256.Final(byDigest);
-	string hex;
+	std::string hex;
 	hex.reserve(digestSize * 2);
 	boost::algorithm::hex_lower(byDigest, byDigest + digestSize, std::back_inserter(hex));
 	delete[] byDigest;

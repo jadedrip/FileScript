@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-Dout=xout get_gps.lua ./test </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-Dout=xout mv_jpg.lua ./test </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=third\lib\x64-Debug</LocalDebuggerEnvironment>
   </PropertyGroup>

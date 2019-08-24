@@ -1,13 +1,18 @@
 #include "stdafx.h"
 #include <unordered_map>
 #include <LuaBridge/LuaBridge.h>
+#include <filesystem>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
 #include "geohash/geohash.h"
 #include "radix_tree/radix_tree.hpp"
+#include <codecvt>
+#include <cryptopp/sha.h>
+#include <boost\algorithm\hex.hpp>
 
-std::string httpGet(const std::string& url);
+std::wstring httpGet(const std::string& url);
 
 using namespace std;
 using namespace luabridge;
@@ -75,6 +80,48 @@ void parseAliyunJson(const std::string& req, std::map<string, string> &m)
 
 				m["admName"] = n;
 			}
+		}
+	}
+}
+
+inline void put(std::map<string, string>& m, const std::string& name, const std::string& value) {
+	if (!value.empty())
+		m[name] = value;
+}
+
+void parseAmapXml(const std::string& req, std::map<string, string>& m)
+{
+	// std::cout << "Parse: " << req << endl;
+	boost::property_tree::ptree root;
+	istringstream ss(req);
+	boost::property_tree::read_xml(ss, root);
+	auto& item = root.get_child("response.regeocode");
+
+	put(m, "formatted_address", item.get<string>("formatted_address"));
+	put(m, "province", item.get<string>("addressComponent.province"));
+	put(m, "township", item.get<string>("addressComponent.township"));
+	put(m, "district", item.get<string>("addressComponent.district"));
+	put(m, "city", item.get<string>("addressComponent.city"));
+
+	bool n = false;
+	auto aois = item.get_child_optional("aois");
+	if (aois.has_value()) {
+		auto& n = aois.get();
+		auto x = n.get_child_optional("aoi");
+		if (x.has_value()) {
+			auto& poi = x.get();
+			string name = poi.get<string>("name");
+			put(m, "aoi", name);
+		}
+	}
+	auto pois = item.get_child_optional("pois");
+	if (pois.has_value()) {
+		auto& n = pois.get();
+		auto x = n.get_child_optional("poi");
+		if (x.has_value()) {
+			auto& poi = x.get();
+			string name = poi.get<string>("name");
+			put(m, "poi", name);
 		}
 	}
 }
@@ -160,6 +207,27 @@ std::map<string, string> loadFromConfig(double latitude, double longitude)
 	}
 	return m ? *m : std::map<string, string>();
 }
+const char* GBK_LOCALE_NAME = ".936"; //GBKÔÚwindowsÏÂµÄlocale name
+wstring_convert<codecvt_byname<wchar_t, char, mbstate_t>> Conver_GBK(new codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));    //GBK - whar
+
+using namespace CryptoPP;
+namespace fs = std::experimental::filesystem;
+
+fs::path getDataFile(const std::string& hashString);
+fs::path cacheFile(const string& url) {
+	SHA256 sha256;
+	int digestSize = sha256.DigestSize();
+	byte* byDigest = new byte[digestSize];
+
+	sha256.Update((byte*)url.c_str(), url.size());
+	sha256.Final(byDigest);
+	std::string hex;
+	hex.reserve(digestSize * 2);
+	boost::algorithm::hex_lower(byDigest, byDigest + digestSize, std::back_inserter(hex));
+	delete[] byDigest;
+
+	return getDataFile(hex + ".xml");
+}
 
 int luaGetGeoInfo(lua_State*L)
 {
@@ -178,22 +246,35 @@ int luaGetGeoInfo(lua_State*L)
 		return 1;
 	}
 
-	std::string key = to_string(dLat) + "," + to_string(dLog);
+	std::string key = to_string(dLog) + "," + to_string(dLat);
 	auto iter = regeoCache.find(key);
 	if (iter == regeoCache.end()) {
 		std::string req;
 		try {
-			std::string url = "http://gc.ditu.aliyun.com/regeocoding?type=111&l=" + key;
-			req = httpGet(url);
-			// std::clog << "Http get: " << url << "\r\n\t" << utf8ToGbk(req) << std::endl;
-			parseAliyunJson(req, map);
+			std::string url = "https://restapi.amap.com/v3/geocode/regeo?output=xml&extensions=all&radius=0&key=42bd2778a8e232b442e9ab46b8a4f91c&location=" + key;
+			auto cache = cacheFile(url);
+			if (fs::exists(cache)) {
+				ifstream ss(cache);
+				req=std::string((std::istreambuf_iterator<char>(ss)),
+					std::istreambuf_iterator<char>());
+			}else{
+				auto body = httpGet(url);
+				std::clog << "Http get: " << url << "\r\n\t" << std::endl;
+				req = Conver_GBK.to_bytes(body);
+				ofstream ss(cache);
+				ss.write(req.c_str(), req.size());
+				ss.flush();
+			}
+
+			//parseAliyunJson(req, map);
+			parseAmapXml(req, map);
 			if (map.empty()) {
 				clog << "Can't get name for " << key << endl;
 			}
 			LuaRef(L, map).push();
 			regeoCache[key] = move(map);
 		} catch (exception & e) {
-			cerr << "Get regeo " << dLat << "," << dLog << " failed with " << e.what() << "\r\n\t" << req << endl;
+			//cerr << "Get regeo " << dLat << "," << dLog << " failed with " << e.what() << "\r\n\t" << req << endl;
 		}
 	} else {
 		auto &map = iter->second;

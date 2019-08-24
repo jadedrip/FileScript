@@ -73,22 +73,26 @@ function convStandardString(str)
 		v=v+1/3600*tonumber( trim(s[3]) )
 	end
 	-- print( "str " .. str .. " to " .. v )
-	v=v-v%0.001
+	-- v=v-v%0.001
 	return v
 end
 
 function getName( lat, lon )
 	local tab = getGeoInfo(lat, lon)
-	if tab["name"] then
-		return tab["name"]
-	elseif tab["admName"] then
-		return tab["admName"]
+	-- PrintTable(tab)
+	if tab==nil then return "" end
+
+	if tab["city"] then
+		return tab["city"]
+	elseif tab["province"] then
+		return tab["province"]
 	end
-	return tab["street"]
+	
+	return tab["formatted_address"], name
 end
 
 function run( file )
---	PrintTable(file)
+	-- PrintTable(file)
 
 	filename = file["filename"]
 	shortname = file["shortname"]
@@ -104,7 +108,7 @@ function run( file )
 	if not out then
 		out = "out/"
 	end
-	print ("out = " .. out)
+	-- print ("out = " .. out)
 	c = string.sub(out,-1,1)
 	if c =="\\" or c == "/" then
 		to = out
@@ -129,15 +133,20 @@ function run( file )
 			local geoLat=convStandardString(lat)
 			local geoLon=convStandardString(lon)
 			local name=getName(geoLat, geoLon)
-			if not name then return end
-			
-			to = to .. "_" .. name
-			
-			printUtf8( filename .. " at " .. geoLat .. "," .. geoLon .. " to " .. to )
+
+			if name then
+				print( "Geo name " .. geoLat .. "," .. geoLon .. ":" .. name)
+				to = to .. "/" .. name .. "/" 
+			else
+				local v=lat-lat%0.01
+				print( filename .. " to " .. to)
+				print( "Geo name " .. geoLat .. "," .. geoLon .. ":")
+				to = to .. "/" .. v .. "/"
+			end
+			print( filename .. " at " .. geoLat .. "," .. geoLon .. " to " .. to )
 		else
-			printUtf8( filename .. " to " .. to)
+			to = to .. "/" 
 		end
-	
 
 		move( filename , to )
 		-- iPhone 会有 .mov 文件 

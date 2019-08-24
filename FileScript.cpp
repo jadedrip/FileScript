@@ -2,13 +2,15 @@
 //
 
 #include "stdafx.h"
+#include <LuaBridge/LuaBridge.h>
+
 #include "FileScript.h"
 #include <curl/curl.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <LuaBridge/Map.h>
-#include <LuaBridge/LuaBridge.h>
+
 
 namespace po = boost::program_options;
 using namespace std;
@@ -42,10 +44,11 @@ void scanDirectory(lua_State*L, const fs::path& dir)
 
 			// 准备参数
 			std::map<std::string, std::string> prop;
-			std::string s=file.u8string();
+			std::string s=file.string();
 			size_t idx = s.find_last_of('.');
 			prop["shortname"] = s.substr(0, idx);
 			prop["filename"] = std::move(s);
+			prop["name"] = file.filename().string();
 			//string hash=fastHashFile(file);
 			//prop["fast_hash"] = hash;
 
@@ -71,8 +74,7 @@ void recursiveDirectory(const std::string& script_file, const std::string& sourc
 	if (status == LUA_ERRSYNTAX)
 		throw std::runtime_error("Can't load file " + script_file + " with syntax error.");
 
-	fs::path data(datapath);
-	fs::create_directories(data);
+	fs::create_directories(datapath);
 
 	luaL_openlibs(L);
 	initLuaFunction(L);

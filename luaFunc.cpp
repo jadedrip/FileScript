@@ -23,7 +23,7 @@ thread_local const fs::path* currentFile;
 Buffer<wchar_t> wbuffer;
 Buffer<char> buffer;
 
-std::string httpGet(const std::string& url);
+std::wstring httpGet(const std::string& url);
 string fastHashFile(const fs::path& file);
 
 wstring fromUtf8(const string& utf8)
@@ -54,31 +54,24 @@ void copyFile(std::string& from, std::string& to, bool move = false)
 	typedef boost::tokenizer<boost::char_separator<char> >     tokenizer;
 	static boost::char_separator<char> sep("\\/");
 
-	wstring wf = fromUtf8(from);
-	wstring wt = fromUtf8(to);
+	//wstring wf = fromUtf8(from);
+	//wstring wt = fromUtf8(to);
 
-	fs::path f(wf);
+	fs::path f(from);
 	if (!fs::exists(f)) return;
 
-	fs::path t(wt);
+	auto c = *to.rbegin();
+	fs::path t(to);
 	fs::create_directories(t);
+	if (c == '/' || c == '\\')
+		t /= f.filename();
 
-	// std::filesystem 似乎对中文支持不好，先改为 windows api
-	wchar_t c = wt.back();
-	if (c != '\\' && c != '/') {
-		wt.push_back('/');
-		wt.append(f.filename().wstring());
-	}
 	if (move) {
-		//fs::rename(f, to);
-		::MoveFileW(wf.c_str(), wt.c_str());
-	} else {
-		::CopyFileW(wf.c_str(), wt.c_str(), TRUE);
+		fs::rename(f, t);
 	}
-		
-//	 else
-//		fs::copy_file(f, to, fs::copy_options::fail_if_exists);
-
+	else {
+		fs::copy(f, t);
+	}
 //#endif // DEBUG
 }
 
@@ -109,19 +102,25 @@ void initFile(const fs::path& f)
 }
 
 extern std::string datapath;
-fs::path getDataPath()
+
+fs::path getDataFile(const std::string& hashString)
 {
-	if (hashString.empty()) {
-		hashString=fastHashFile(*currentFile);
-	}
 	string p1 = hashString.substr(0, 2);
 	string p2 = hashString.substr(2, 2);
 	fs::path dir(datapath);
 	dir /= p1;
 	dir /= p2;
-	dir /= hashString;
+	fs::create_directories(dir);
 	// clog << "File " << currentFile->string() << " hash to :" << dir.string() << endl;
-	return dir;
+	return dir / hashString;
+}
+
+fs::path getDataPath()
+{
+	if (hashString.empty()) {
+		hashString=fastHashFile(*currentFile);
+	}
+	return getDataFile(hashString);
 }
 
 void writeObject(ofstream& o, const LuaRef& data)
@@ -260,5 +259,3 @@ void initLuaFunction(lua_State*L)
 	lua_register(L, "getGeoInfo", &luaGetGeoInfo);
 	lua_register(L, "printUtf8", &luaPrintUtf8);
 }
-
-// http://gc.ditu.aliyun.com/regeocoding?l=39.993253,116.473195&type=010
